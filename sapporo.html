@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>삿포로 여행 스마트 대시보드</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <style>
+        body { font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, 'Helvetica Neue', 'Segoe UI', 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', sans-serif; }
+        
+        .timeline-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 1.5rem;
+            width: 2px;
+            background: #e2e8f0;
+            z-index: 0;
+        }
+
+        .timeline-item {
+            animation: fadeIn 0.3s ease-out forwards;
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        @keyframes fadeIn {
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+        .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased selection:bg-blue-200 selection:text-blue-900">
+
+    <!-- Header -->
+    <header class="bg-white shadow-sm sticky top-0 z-50">
+        <div class="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
+            <h1 class="text-xl md:text-2xl font-bold text-slate-900 tracking-tight">❄️ Sapporo Dashboard</h1>
+            <div class="text-sm font-medium text-blue-700 bg-blue-50 px-3 py-1 rounded-full border border-blue-100">삿포로 4박 5일</div>
+        </div>
+    </header>
+
+    <main class="max-w-4xl mx-auto px-4 py-8 space-y-12">
+
+        <!-- Introduction Section -->
+        <section id="overview" class="bg-white rounded-2xl p-6 md:p-8 shadow-sm border border-slate-100">
+            <h2 class="text-2xl font-bold mb-4">여행 개요</h2>
+            <p class="text-slate-600 leading-relaxed mb-4">
+                이 대시보드는 삿포로 여행을 위해 최적화된 **디지털 가이드북**입니다. 
+                광주에서 출발하여 인천공항을 거쳐 삿포로의 맥주 박물관, 비에이 투어, 요이치 증류소, 그리고 오타루까지 이어지는 꼼꼼한 동선을 담고 있습니다. 
+                일정 중 놓치기 쉬운 교통 팁과 상세 메모를 확인하여 완벽한 삿포로 여행을 즐겨보세요.
+            </p>
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mt-6">
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-100 text-center">
+                    <div class="text-2xl mb-1">📅</div>
+                    <div class="text-xs text-slate-500 font-semibold uppercase">전체 기간</div>
+                    <div class="text-sm font-bold text-slate-800">4박 5일</div>
+                </div>
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-100 text-center">
+                    <div class="text-2xl mb-1">📍</div>
+                    <div class="text-xs text-slate-500 font-semibold uppercase">주요 도시</div>
+                    <div class="text-sm font-bold text-slate-800">삿포로, 요이치, 오타루</div>
+                </div>
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-100 text-center">
+                    <div class="text-2xl mb-1">🏨</div>
+                    <div class="text-xs text-slate-500 font-semibold uppercase">메인 숙소</div>
+                    <div class="text-sm font-bold text-slate-800">크로스 삿포로 호텔</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Interactive Itinerary Section -->
+        <section id="itinerary" class="space-y-6">
+            <div class="flex flex-col md:flex-row md:items-end justify-between mb-2">
+                <div>
+                    <h2 class="text-2xl font-bold">인터랙티브 일정표</h2>
+                    <p class="text-sm text-slate-500 mt-1">상단 탭을 클릭하여 일자별 상세 일정을 확인하세요. 각 항목을 클릭하면 메모가 나타납니다.</p>
+                </div>
+            </div>
+
+            <!-- Day Tabs -->
+            <div class="flex overflow-x-auto pb-2 space-x-2 scrollbar-hide" id="day-tabs">
+                <!-- JavaScript에서 동적으로 탭 생성 -->
+            </div>
+
+            <!-- Timeline Content -->
+            <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 min-h-[400px]">
+                <h3 class="text-lg font-bold text-blue-700 mb-6 pb-2 border-b border-slate-100" id="current-day-title">일정을 불러오는 중...</h3>
+                
+                <div class="relative timeline-container pl-6" id="timeline-content">
+                    <!-- JavaScript에서 동적으로 타임라인 생성 -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Key Route Tips Section -->
+        <section id="tips" class="space-y-6">
+            <div>
+                <h2 class="text-2xl font-bold text-slate-900">핵심 이동 가이드</h2>
+                <p class="text-sm text-slate-500 mt-1">삿포로 현지에서 당황하지 않도록 반드시 숙지해야 할 필수 체크포인트입니다.</p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Tip 1: Yoichi Station Warning -->
+                <div class="bg-amber-50 border border-amber-200 rounded-2xl p-6 shadow-sm">
+                    <div class="flex items-center gap-3 mb-4">
+                        <span class="text-3xl">⚠️</span>
+                        <h4 class="font-bold text-amber-900 text-lg">요이치역 IC카드 불가</h4>
+                    </div>
+                    <p class="text-sm text-amber-800 leading-relaxed">
+                        요이치역은 자동 개찰구가 없어 <strong>교통카드(Suica, Pasmo 등) 사용이 절대 불가능</strong>합니다. 
+                        삿포로역 발권기에서 반드시 <strong>종이 승차권(1,290엔)</strong>을 미리 구입하세요. 카드를 찍고 갔다면 역무원에게 별도 현금 정산을 해야 하는 번거로움이 있습니다.
+                    </p>
+                </div>
+                <!-- Tip 2: Minami Otaru Station Tip -->
+                <div class="bg-blue-50 border border-blue-200 rounded-2xl p-6 shadow-sm">
+                    <div class="flex items-center gap-3 mb-4">
+                        <span class="text-3xl">🚆</span>
+                        <h4 class="font-bold text-blue-900 text-lg">오타루 관광 동선 팁</h4>
+                    </div>
+                    <p class="text-sm text-blue-800 leading-relaxed">
+                        오타루 여행 시 종점인 오타루역 대신 한 정거장 전인 <strong>미나미 오타루역</strong>에서 하차하세요. 
+                        이곳에서 내리면 오르골당, 오타루 운하를 거쳐 오타루역 방향으로 완만한 내리막길을 따라 효율적으로 구경할 수 있습니다.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Quick References Section -->
+        <section id="references" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="bg-slate-900 rounded-2xl p-6 text-white">
+                <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
+                    <span>🚉</span> 공항-시내 열차 정보
+                </h3>
+                <ul class="space-y-3 text-sm text-slate-300">
+                    <li class="flex justify-between">
+                        <span>JR 쾌속 에어포트 (자유석)</span>
+                        <span class="font-bold text-white">1,230엔</span>
+                    </li>
+                    <li class="flex justify-between">
+                        <span>JR 쾌속 에어포트 (지정석)</span>
+                        <span class="font-bold text-white">2,070엔</span>
+                    </li>
+                    <li class="border-t border-slate-700 pt-3">
+                        입국 후 JR 표지판을 따라 지하 1층 플랫폼으로 이동하세요. 삿포로역 하차 시 남쪽 출구 방향으로 나가는 것이 숙소(크로스 삿포로)와 가깝습니다.
+                    </li>
+                </ul>
+            </div>
+            <div class="bg-blue-700 rounded-2xl p-6 text-white">
+                <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
+                    <span>🏔️</span> 비에이 투어 안내
+                </h3>
+                <p class="text-sm text-blue-100 leading-relaxed">
+                    DAY 3(일요일)은 전일 비에이 투어입니다. 
+                    <strong>오전 07:00까지 삿포로역 북쪽광장 공중화장실 앞</strong>에 도착해야 합니다. 
+                    겨울 시즌이므로 핫팩과 방한 용품을 넉넉히 챙기시고, 투어 종료 후 저녁은 스스키노 인근 징기스칸을 추천합니다.
+                </p>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-white border-t border-slate-200 py-10 text-center">
+        <p class="text-slate-400 text-sm">삿포로 여행 스마트 대시보드 &copy; 2026</p>
+        <p class="text-slate-300 text-xs mt-1 italic">Source: 삿포로 여행 계획표 (Excel)</p>
+    </footer>
+
+    <script>
+        // 1. Data Structure (Sapporo Only)
+        const sapporoSchedule = {
+            1: {
+                title: "DAY 1 (금) - 여행의 시작",
+                items: [
+                    { time: "17:40", location: "자택(대윤) 출발", transport: "택시/도보", note: "설레는 삿포로 여행 시작!", icon: "🏠" },
+                    { time: "18:41", location: "광주 송정역 도착", transport: "택시", note: "기차 시간 10분 전 대기", icon: "🚕" },
+                    { time: "20:46", location: "용산역 도착", transport: "KTX", note: "인천공항행 환승 준비", icon: "🚄" },
+                    { time: "22:00", location: "골든튤립 인천공항 호텔", transport: "지하철", note: "운서역 인근 숙소 체크인", icon: "🏨" }
+                ]
+            },
+            2: {
+                title: "DAY 2 (토) - 삿포로 입성",
+                items: [
+                    { time: "06:50", location: "인천공항 제2터미널", transport: "지하철/도보", note: "출국 3시간 전 도착 권장", icon: "🛫" },
+                    { time: "13:25", location: "신치토세 공항 도착", transport: "항공기", note: "입국 심사 및 짐 찾기", icon: "🛬" },
+                    { time: "15:30", location: "크로스 삿포로 호텔", transport: "JR 쾌속 에어포트", note: "삿포로역 하차 후 도보 이동", icon: "🏨" },
+                    { time: "16:30", location: "삿포로 맥주박물관", transport: "도보", note: "무료 시음 맥주 즐기기 (인당 1~2잔)", icon: "🍺" },
+                    { time: "18:00", location: "삿포로 파르코 백화점", transport: "택시", note: "오니츠카타이거 등 쇼핑 목록 확인", icon: "🛍️" },
+                    { time: "19:00", location: "수프카레 트레져", transport: "도보", note: "삿포로 필수 먹거리 수프카레 저녁", icon: "🍛" },
+                    { time: "19:40", location: "돈키호테 스스키노점", transport: "도보", note: "간식 및 기념품 쇼핑", icon: "🛒" },
+                    { time: "21:00", location: "호텔 복귀 및 휴식", transport: "도보", note: "편의점 간식 타임", icon: "🛌" }
+                ]
+            },
+            3: {
+                title: "DAY 3 (일) - 비에이 설경 투어",
+                items: [
+                    { time: "07:00", location: "삿포로역 북쪽광장", transport: "도보", note: "공중화장실 앞 미팅 포인트", icon: "📍" },
+                    { time: "07:50", location: "비에이 투어 시작", transport: "투어 버스", note: "두툼한 패딩과 미끄럼 방지 신발 필수", icon: "🚌" },
+                    { time: "18:10", location: "삿포로 시내 복귀", transport: "투어 버스", note: "스스키노 혹은 삿포로역 하차", icon: "🏁" },
+                    { time: "18:30", location: "징기스칸", transport: "도보", note: "줄 서는 맛집이 많으니 빠른 방문!", icon: "🍖" }
+                ]
+            },
+            4: {
+                title: "DAY 4 (월) - 요이치 & 오타루",
+                items: [
+                    { time: "08:00", location: "삿포로역 출발", transport: "JR 열차", note: "08:32 열차 필수! 종이 승차권 끊기", icon: "🚉" },
+                    { time: "10:00", location: "카키자키 쇼텐", transport: "도보", note: "신선한 해산물 덮밥으로 아점", icon: "🍣" },
+                    { time: "11:00", location: "요이치 증류소", transport: "도보", note: "위스키 시음 및 견학", icon: "🥃" },
+                    { time: "13:43", location: "미나미 오타루역 도착", transport: "JR 열차", note: "여기서 하차해야 구경하기 편함", icon: "📍" },
+                    { time: "13:55", location: "다나카 주조 킷코구라", transport: "도보", note: "전통 주조장 구경 및 시음", icon: "🍶" },
+                    { time: "15:30", location: "오타루 운하", transport: "도보", note: "운하 배경으로 인증샷 촬영", icon: "❄️" },
+                    { time: "17:00", location: "오타루역 출발", transport: "JR 열차", note: "삿포로행 쾌속 열차 확인", icon: "🚆" },
+                    { time: "18:30", location: "야키니쿠 저녁 식사", transport: "도보", note: "마지막 밤 화려한 고기 파티", icon: "🥩" },
+                    { time: "20:00", location: "삿포로 TV 타워", transport: "도보", note: "타워 전망대에서 시내 야경 감상", icon: "🗼" }
+                ]
+            },
+            5: {
+                title: "DAY 5 (화) - 아쉬운 안녕",
+                items: [
+                    { time: "09:00", location: "호텔 체크아웃", transport: "도보", note: "잊은 물건 없는지 재확인", icon: "🎒" },
+                    { time: "10:00", location: "신치토세 공항", transport: "JR 열차", note: "공항 내 면세점 및 과자 쇼핑", icon: "🚉" },
+                    { time: "14:50", location: "삿포로 출발", transport: "항공기", note: "비행기에서 한숨 자기", icon: "🛫" },
+                    { time: "17:55", location: "인천공항 도착", transport: "-", note: "수하물 찾기", icon: "🛬" },
+                    { time: "21:18", location: "광주행 KTX 탑승", transport: "지하철/KTX", note: "무사히 집으로!", icon: "🚄" },
+                    { time: "23:40", location: "자택 도착", transport: "-", note: "여행 끝! 푹 자기", icon: "🏠" }
+                ]
+            }
+        };
+
+        let activeDay = 1;
+
+        // 2. Tab Initialization
+        function initTabs() {
+            const tabsContainer = document.getElementById('day-tabs');
+            Object.keys(sapporoSchedule).forEach(dayNum => {
+                const btn = document.createElement('button');
+                btn.className = `whitespace-nowrap px-6 py-3 rounded-2xl font-bold text-sm transition-all duration-300 border ${dayNum == activeDay ? 'bg-blue-700 text-white border-blue-700 shadow-lg' : 'bg-white text-slate-500 border-slate-200 hover:border-blue-300'}`;
+                btn.textContent = `DAY ${dayNum}`;
+                btn.onclick = () => {
+                    activeDay = parseInt(dayNum);
+                    updateTabsStyle();
+                    renderTimeline(activeDay);
+                };
+                tabsContainer.appendChild(btn);
+            });
+        }
+
+        function updateTabsStyle() {
+            const buttons = document.getElementById('day-tabs').children;
+            Array.from(buttons).forEach((btn, idx) => {
+                const isSelected = (idx + 1) === activeDay;
+                btn.className = `whitespace-nowrap px-6 py-3 rounded-2xl font-bold text-sm transition-all duration-300 border ${isSelected ? 'bg-blue-700 text-white border-blue-700 shadow-lg scale-105' : 'bg-white text-slate-500 border-slate-200 hover:border-blue-300'}`;
+            });
+        }
+
+        // 3. Timeline Rendering
+        function renderTimeline(day) {
+            const container = document.getElementById('timeline-content');
+            const titleEl = document.getElementById('current-day-title');
+            const data = sapporoSchedule[day];
+            
+            titleEl.textContent = data.title;
+            container.innerHTML = '';
+
+            data.items.forEach((item, index) => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'relative mb-10 timeline-item cursor-pointer group';
+                itemDiv.style.animationDelay = `${index * 0.05}s`;
+                
+                // Interaction: Show/Hide note
+                itemDiv.onclick = () => {
+                    const noteBox = itemDiv.querySelector('.item-note');
+                    if (noteBox) noteBox.classList.toggle('hidden');
+                };
+
+                itemDiv.innerHTML = `
+                    <div class="absolute -left-[1.95rem] top-1 w-4 h-4 rounded-full bg-white border-[3px] border-blue-600 z-10 group-hover:scale-125 transition-transform shadow-sm"></div>
+                    <div class="ml-4">
+                        <div class="flex items-center gap-3 mb-1">
+                            <span class="text-sm font-black text-blue-700 w-12">${item.time}</span>
+                            <h4 class="text-base font-bold text-slate-800 flex items-center gap-2">
+                                <span>${item.icon}</span> ${item.location}
+                            </h4>
+                        </div>
+                        <div class="flex items-center gap-2 text-xs font-medium text-slate-400">
+                            <span class="bg-slate-100 px-2 py-0.5 rounded text-slate-600">이동: ${item.transport}</span>
+                            ${item.note ? '<span class="text-blue-500">● 상세 메모 있음</span>' : ''}
+                        </div>
+                        <div class="item-note hidden mt-3 p-4 bg-slate-50 rounded-xl border-l-4 border-blue-600 text-sm text-slate-600 shadow-inner">
+                            ${item.note || '별도 메모 없음'}
+                        </div>
+                    </div>
+                `;
+                container.appendChild(itemDiv);
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initTabs();
+            renderTimeline(activeDay);
+        });
+    </script>
+</body>
+</html>
