@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>삿포로 여행 스마트 대시보드</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Chosen Palette: Winter Neutral & Sapphire. 눈 덮인 삿포로를 상징하는 깨끗한 흰색(bg-white)과 차분한 슬레이트 블루(text-blue-700)를 메인으로 사용했습니다. -->
+    
+    <!-- Application Structure Plan: 
+    1. 개요 섹션: 여행의 기본 정보(기간, 장소, 숙소)를 보여줍니다.
+    2. 실시간 날씨 섹션 (신규): 구글 검색 기반 Gemini API를 호출하여 현재 삿포로 날씨와 복장 조언을 실시간으로 제공합니다.
+    3. 인터랙티브 일정표: 탭 방식으로 4박 5일 동선을 보여주며, 클릭 시 상세 메모를 확인할 수 있습니다.
+    4. 핵심 이동 가이드: 요이치역 결제 주의사항 등 가장 중요한 팁을 상단에 고정 배치했습니다.
+    이 구조는 사용자가 '지금 날씨가 어떤지' 확인하고 바로 '오늘의 일정'으로 넘어갈 수 있는 흐름을 제공합니다.
+    -->
+
+    <!-- Visualization & Content Choices:
+    - 날씨 위젯: 로딩 인디케이터와 함께 Gemini API 응답을 동적으로 표시 (JS 기반).
+    - 일정 타임라인: 세로형 타임라인 구조 (Tailwind + CSS 애니메이션).
+    - 아이콘: SVG를 사용하지 말라는 제약에 따라 유니코드 및 이모지를 활용했습니다.
+    -->
+
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+
+    <style>
+        body { font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, 'Helvetica Neue', 'Segoe UI', 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', sans-serif; }
+        
+        .timeline-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 1.5rem;
+            width: 2px;
+            background: #e2e8f0;
+            z-index: 0;
+        }
+
+        .timeline-item {
+            animation: fadeIn 0.3s ease-out forwards;
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        @keyframes fadeIn {
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+        .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        /* 로딩 애니메이션 */
+        .loader {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3b82f6;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased selection:bg-blue-200 selection:text-blue-900">
+
+    <!-- 헤더 -->
+    <header class="bg-white shadow-sm sticky top-0 z-50">
+        <div class="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
+            <h1 class="text-xl md:text-2xl font-bold text-slate-900 tracking-tight">❄️ 삿포로 여행 대시보드</h1>
+            <div class="text-sm font-medium text-blue-700 bg-blue-50 px-3 py-1 rounded-full border border-blue-100">4박 5일 일정</div>
+        </div>
+    </header>
+
+    <main class="max-w-4xl mx-auto px-4 py-8 space-y-10">
+
+        <!-- 개요 & 실시간 날씨 섹션 -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- 개요 카드 -->
+            <section id="overview" class="md:col-span-2 bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+                <h2 class="text-xl font-bold mb-4">여행 개요</h2>
+                <div class="grid grid-cols-3 gap-4">
+                    <div class="bg-slate-50 p-3 rounded-xl border border-slate-100 text-center">
+                        <div class="text-xl mb-1">📅</div>
+                        <div class="text-[10px] text-slate-500 font-bold uppercase">기간</div>
+                        <div class="text-xs font-bold text-slate-800">4박 5일</div>
+                    </div>
+                    <div class="bg-slate-50 p-3 rounded-xl border border-slate-100 text-center">
+                        <div class="text-xl mb-1">📍</div>
+                        <div class="text-[10px] text-slate-500 font-bold uppercase">장소</div>
+                        <div class="text-xs font-bold text-slate-800">삿포로/오타루</div>
+                    </div>
+                    <div class="bg-slate-50 p-3 rounded-xl border border-slate-100 text-center">
+                        <div class="text-xl mb-1">🏨</div>
+                        <div class="text-[10px] text-slate-500 font-bold uppercase">숙소</div>
+                        <div class="text-xs font-bold text-slate-800">크로스 삿포로</div>
+                    </div>
+                </div>
+                <p class="text-slate-500 text-sm mt-4 leading-relaxed">
+                    본 대시보드는 광주-인천-삿포로 노선의 4박 5일 동선을 최적화하여 보여줍니다.
+                </p>
+            </section>
+
+            <!-- 실시간 날씨 카드 -->
+            <section id="weather-section" class="bg-blue-600 rounded-2xl p-6 shadow-lg text-white relative overflow-hidden">
+                <h2 class="text-lg font-bold mb-3 flex items-center gap-2">
+                    <span>🌡️</span> 실시간 삿포로 날씨
+                </h2>
+                <div id="weather-content">
+                    <p class="text-blue-100 text-xs mb-4">현재 날씨 정보를 구글 검색을 통해 가져옵니다.</p>
+                    <button onclick="updateWeather()" id="weather-btn" class="w-full bg-white text-blue-700 font-bold py-2 px-4 rounded-xl shadow-md hover:bg-blue-50 transition-colors text-sm">
+                        날씨 정보 업데이트
+                    </button>
+                </div>
+                <div id="weather-result" class="hidden space-y-3">
+                    <!-- 결과가 여기에 표시됨 -->
+                </div>
+                <div id="weather-loading" class="hidden flex flex-col items-center justify-center py-4">
+                    <div class="loader mb-2"></div>
+                    <p class="text-xs text-blue-100">정보를 찾는 중...</p>
+                </div>
+            </section>
+        </div>
+
+        <!-- 핵심 이동 가이드 (상단 고정 알림 형태) -->
+        <section id="tips" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 flex gap-4">
+                <span class="text-2xl">⚠️</span>
+                <div>
+                    <h4 class="font-bold text-amber-900 text-sm">요이치역 주의사항</h4>
+                    <p class="text-xs text-amber-800 mt-1">IC카드 하차 불가! 삿포로역에서 반드시 <strong>종이 승차권(1,290엔)</strong>을 발권하세요.</p>
+                </div>
+            </div>
+            <div class="bg-indigo-50 border border-indigo-200 rounded-xl p-4 flex gap-4">
+                <span class="text-2xl">🚆</span>
+                <div>
+                    <h4 class="font-bold text-indigo-900 text-sm">오타루 하차 팁</h4>
+                    <p class="text-xs text-indigo-800 mt-1">오타루역 말고 <strong>미나미 오타루역</strong>에서 내려야 운하 방향 내리막길로 구경하기 편합니다.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 일정 섹션 -->
+        <section id="itinerary" class="space-y-4">
+            <div class="flex items-center justify-between">
+                <h2 class="text-2xl font-bold">인터랙티브 일정표</h2>
+            </div>
+
+            <!-- 날짜 탭 -->
+            <div class="flex overflow-x-auto pb-2 space-x-2 scrollbar-hide" id="day-tabs"></div>
+
+            <!-- 타임라인 콘텐츠 -->
+            <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+                <h3 class="text-lg font-bold text-blue-700 mb-6 pb-2 border-b border-slate-100" id="current-day-title">불러오는 중...</h3>
+                <div class="relative timeline-container pl-6" id="timeline-content"></div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-white border-t border-slate-200 py-8 text-center">
+        <p class="text-slate-400 text-xs italic">실시간 날씨 기능은 Gemini 2.5 Flash를 통해 구글 검색 결과로 제공됩니다.</p>
+    </footer>
+
+    <script>
+        // --- 1. 날씨 정보 가져오기 (Gemini API with Google Search Grounding) ---
+        const apiKey = ""; // 환경에서 제공됨
+
+        async function updateWeather() {
+            const btn = document.getElementById('weather-btn');
+            const content = document.getElementById('weather-content');
+            const loading = document.getElementById('weather-loading');
+            const result = document.getElementById('weather-result');
+
+            content.classList.add('hidden');
+            loading.classList.remove('hidden');
+            result.classList.add('hidden');
+
+            const userQuery = "현재 일본 삿포로의 실시간 날씨와 온도, 상태, 그리고 여행자를 위한 간단한 복장 조언을 한국어로 알려줘.";
+            const systemPrompt = "너는 여행 가이드야. 구글 검색을 활용해서 가장 최신의 삿포로 날씨 정보를 요약해서 제공해줘. 답변은 '온도: XX도, 상태: XX, 조언: XX' 처럼 명확하고 짧게 해줘.";
+
+            const fetchWithRetry = async (url, options, retries = 5, backoff = 1000) => {
+                for (let i = 0; i < retries; i++) {
+                    try {
+                        const response = await fetch(url, options);
+                        if (response.ok) return await response.json();
+                    } catch (e) {
+                        if (i === retries - 1) throw e;
+                    }
+                    await new Promise(resolve => setTimeout(resolve, backoff * Math.pow(2, i)));
+                }
+            };
+
+            try {
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+                const payload = {
+                    contents: [{ parts: [{ text: userQuery }] }],
+                    systemInstruction: { parts: [{ text: systemPrompt }] },
+                    tools: [{ "google_search": {} }]
+                };
+
+                const data = await fetchWithRetry(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const weatherText = data.candidates?.[0]?.content?.parts?.[0]?.text || "정보를 가져올 수 없습니다.";
+                
+                loading.classList.add('hidden');
+                result.classList.remove('hidden');
+                
+                // 결과 표시
+                result.innerHTML = `
+                    <div class="bg-blue-500/50 p-4 rounded-xl border border-blue-400">
+                        <p class="text-xs font-bold text-blue-100 mb-1">업데이트 결과</p>
+                        <p class="text-sm leading-relaxed text-white">${weatherText.replace(/\n/g, '<br>')}</p>
+                    </div>
+                    <button onclick="resetWeather()" class="text-[10px] text-blue-200 underline mt-2">다시 확인하기</button>
+                `;
+
+            } catch (error) {
+                loading.classList.add('hidden');
+                content.classList.remove('hidden');
+                alert("날씨 정보를 가져오는 데 실패했습니다. 잠시 후 다시 시도해 주세요.");
+            }
+        }
+
+        function resetWeather() {
+            document.getElementById('weather-content').classList.remove('hidden');
+            document.getElementById('weather-result').classList.add('hidden');
+        }
+
+        // --- 2. 일정 데이터 ---
+        const sapporoSchedule = {
+            1: {
+                title: "1일차 (금) - 출발 및 인천 숙박",
+                items: [
+                    { time: "17:40", location: "자택 출발", transport: "도보/택시", note: "여행 시작!", icon: "🏠" },
+                    { time: "18:41", location: "광주 송정역", transport: "택시", note: "기차 시간 엄수", icon: "🚄" },
+                    { time: "22:00", location: "골든튤립 인천공항 호텔", transport: "지하철", note: "운서역 인근 숙소 체크인", icon: "🏨" }
+                ]
+            },
+            2: {
+                title: "2일차 (토) - 삿포로 입성",
+                items: [
+                    { time: "13:25", location: "신치토세 공항 도착", transport: "항공기", note: "입국 심사 진행", icon: "🛬" },
+                    { time: "15:30", location: "크로스 삿포로 호텔", transport: "JR 쾌속 에어포트", note: "삿포로역 남쪽 출구 방향", icon: "🏨" },
+                    { time: "16:30", location: "삿포로 맥주박물관", transport: "도보", note: "무료 시음 맥주 즐기기", icon: "🍺" },
+                    { time: "19:00", location: "수프카레 트레져", transport: "도보", note: "삿포로 대표 메뉴로 저녁 식사", icon: "🍛" },
+                    { time: "21:00", location: "호텔 복귀", transport: "도보", note: "편의점 털기 및 휴식", icon: "🛌" }
+                ]
+            },
+            3: {
+                title: "3일차 (일) - 비에이 투어",
+                items: [
+                    { time: "07:00", location: "삿포로역 북쪽광장", transport: "도보", note: "공중화장실 앞 미팅 포인트", icon: "📍" },
+                    { time: "07:50", location: "비에이 투어 시작", transport: "버스", note: "전일 설경 투어 진행", icon: "🚌" },
+                    { time: "18:30", location: "징기스칸 식당", transport: "도보", note: "저녁 메뉴: 양고기 구이", icon: "🍖" }
+                ]
+            },
+            4: {
+                title: "4일차 (월) - 요이치 & 오타루",
+                items: [
+                    { time: "08:00", location: "삿포로역 출발", transport: "JR 열차", note: "요이치행 종이 승차권 필수!", icon: "🚉" },
+                    { time: "11:00", location: "요이치 증류소", transport: "도보", note: "위스키 시음 및 견학", icon: "🥃" },
+                    { time: "13:43", location: "미나미 오타루역 도착", transport: "JR 열차", note: "여기서 내려야 구경하기 좋음", icon: "📍" },
+                    { time: "15:30", location: "오타루 운하", transport: "도보", note: "운하 야경 및 산책", icon: "❄️" },
+                    { time: "18:30", location: "야키니쿠 저녁", transport: "도보", note: "마지막 밤 화려한 고기 식사", icon: "🥩" },
+                    { time: "20:00", location: "삿포로 TV 타워", transport: "도보", note: "전망대 시내 야경 감상", icon: "🗼" }
+                ]
+            },
+            5: {
+                title: "5일차 (화) - 아쉬운 귀가",
+                items: [
+                    { time: "10:00", location: "신치토세 공항", transport: "JR 열차", note: "공항 쇼핑 및 점심 식사", icon: "🛍️" },
+                    { time: "14:50", location: "삿포로 출발", transport: "항공기", note: "안녕 삿포로!", icon: "🛫" },
+                    { time: "23:40", location: "자택 도착", transport: "KTX/택시", note: "여행 종료", icon: "🏠" }
+                ]
+            }
+        };
+
+        let activeDay = 1;
+
+        function initTabs() {
+            const tabsContainer = document.getElementById('day-tabs');
+            Object.keys(sapporoSchedule).forEach(dayNum => {
+                const btn = document.createElement('button');
+                btn.className = `whitespace-nowrap px-6 py-2.5 rounded-xl font-bold text-sm transition-all duration-300 border ${dayNum == activeDay ? 'bg-blue-700 text-white border-blue-700 shadow-md' : 'bg-white text-slate-500 border-slate-200 hover:border-blue-300'}`;
+                btn.textContent = `${dayNum}일차`;
+                btn.onclick = () => {
+                    activeDay = parseInt(dayNum);
+                    updateTabsStyle();
+                    renderTimeline(activeDay);
+                };
+                tabsContainer.appendChild(btn);
+            });
+        }
+
+        function updateTabsStyle() {
+            const buttons = document.getElementById('day-tabs').children;
+            Array.from(buttons).forEach((btn, idx) => {
+                const isSelected = (idx + 1) === activeDay;
+                btn.className = `whitespace-nowrap px-6 py-2.5 rounded-xl font-bold text-sm transition-all duration-300 border ${isSelected ? 'bg-blue-700 text-white border-blue-700 shadow-md' : 'bg-white text-slate-500 border-slate-200 hover:border-blue-300'}`;
+            });
+        }
+
+        function renderTimeline(day) {
+            const container = document.getElementById('timeline-content');
+            const titleEl = document.getElementById('current-day-title');
+            const data = sapporoSchedule[day];
+            
+            titleEl.textContent = data.title;
+            container.innerHTML = '';
+
+            data.items.forEach((item, index) => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'relative mb-10 timeline-item cursor-pointer group';
+                itemDiv.style.animationDelay = `${index * 0.05}s`;
+                
+                itemDiv.onclick = () => {
+                    const noteBox = itemDiv.querySelector('.item-note');
+                    if (noteBox) noteBox.classList.toggle('hidden');
+                };
+
+                itemDiv.innerHTML = `
+                    <div class="absolute -left-[1.95rem] top-1 w-4 h-4 rounded-full bg-white border-[3px] border-blue-600 z-10 group-hover:scale-125 transition-transform shadow-sm"></div>
+                    <div class="ml-4">
+                        <div class="flex items-center gap-3 mb-1">
+                            <span class="text-xs font-bold text-blue-700 w-10">${item.time}</span>
+                            <h4 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+                                <span>${item.icon}</span> ${item.location}
+                            </h4>
+                        </div>
+                        <div class="flex items-center gap-2 text-[10px] font-medium text-slate-400">
+                            <span class="bg-slate-100 px-2 py-0.5 rounded text-slate-500">이동: ${item.transport}</span>
+                            ${item.note ? '<span class="text-blue-500 font-bold">● 메모</span>' : ''}
+                        </div>
+                        <div class="item-note hidden mt-2 p-3 bg-slate-50 rounded-lg border-l-4 border-blue-600 text-xs text-slate-600">
+                            ${item.note || '별도 메모 없음'}
+                        </div>
+                    </div>
+                `;
+                container.appendChild(itemDiv);
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initTabs();
+            renderTimeline(activeDay);
+        });
+    </script>
+</body>
+</html>
